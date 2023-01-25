@@ -1,0 +1,2 @@
+Book: bookID|bookName|bookPrice|bookCategoryId
+BookCategory: bookCategoryId|bookCategoryName

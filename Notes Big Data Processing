@@ -1,0 +1,195 @@
+BIG DATA PROCESSING
+
+
+
+Session 1 - Introduction
+========================
+Intro to Big Data Processing
+
+Big Data
+-> Teknik atau model pemrograman untuk mengakses data dengan skala yang besar
+-> Datanya biasanya dipakai buat Model AI, Data Analytics
+
+Why?
+-> Data adalah asset yang valuable
+-> Perusahaan berlomba-lomba buat cari data sebanyak mungkin untuk meningkatkan profit dan mengalahkan kompetitornya
+-> Jika data diproses dengan baik, perusahaan bisa improve operasionalnya sehingga bisa mendapatkan profit yang lebih banyak
+
+Jaman dulu teknologinya kurang memadai buat proses data yang sangat besar, maka muncullah Big Data Processing
+
+Binus pakenya Apache Hadoop
+-> Diciptakan Google dan bekerja sama dengan Apache Software Foundation
+
+Apache Hadoop adalah framework atau tool buat simpan dan proses data di beberapa processor atau mesin. Prosesnya akan berjalan secara paralel dan datanya dibagi-bagi agar eksekusinya lebih cepat dan efisien. Ekosistem Apache Hadoop memiliki banyak tool yang bisa kita pakai.
+
+Cloudera
+--------
+
+Cloudera adalah platform yang dilengkapi dengan fitur-fitur Big Data.
+Apache Hadoop sudah bisa kita gunakan langsung di Cloudera.
+
+Command Line Interface
+----------------------
+pwd
+cd
+mkdir
+touch
+mv
+man
+rm
+
+HDFS (Hadoop Distributed File System)
+-------------------------------------
+-> File System untuk menyimpan data secara terdistribusi ke beberapa node / komputer yang ada
+-> Data Node adalah tempat untuk menyimpan file
+-> Name Node mencatat alamat dari setiap file yang ada di node (file apa berada di node mana)
+
+Hue (Hadoop User Interface)
+---
+-> Web Open Source yang digunakan untuk memudahkan penggunaan Apache Hadoop
+-> username & password = cloudera
+
+
+
+Session 2 - Map Reduce and Pig
+==============================
+-> Map Reduce adalah Programming model untuk proses data secara paralel. Code ditulis dengan python
+
+-> Proses Map Reduce (Buat cari Word Count)
+	- Input -> Banyak word
+	- Splitting -> Data dibagi untuk dikerjakan secara paralel
+	- Mapping -> Data dipecah jadi Key & Value Pair
+	- Shuffling -> Hasil shuffling dikelompokan berdasarkan key
+	- Reducing -> Value dari key diproses agar kita punya 1 key dan 1 value
+	- Final Result -> Key Value Pair dari word, dan countnya
+
+-> Header u.data (userID, movieID, rating, timestamp)
+
+-> Pig high level dataflow system dimana kita mengubah script dengan bahasa Pig Latin menjadi program MapReduce menggunakan Pig Compiler.
+
+-> Proses Pig
+	- Move Data ke Hadoop FS
+		hadoop fs -copyFromLocal '[nama file]' '/user/cloudera'
+	- Activate Pig
+		pig
+	- Load Data
+		book = LOAD '/user/cloudera/Book.csv' USING PigStorage(';') AS (bookID: int, bookName: chararray, bookPrice: int, bookCategoryId: int);
+
+		bookCategory = LOAD '/user/cloudera/BookCategory.csv' USING PigStorage(';') AS (bookCategoryID: int, bookCategoryName: chararray);
+	- Ubah Tipe Data (Biar Book Price ke chararray, bisa kita bandingin sama 'NaN')
+		book = FOREACH book GENERATE bookID, bookName, (chararray) bookPrice, bookCategoryId;
+	- Filter Data (Clean Data)
+		book = FILTER book BY bookPrice != 'NaN';
+	- Display Data
+		DUMP book;
+	- Join Data
+		bookWithCategory = JOIN book BY bookCategoryId, bookCategory BY bookCategoryId;
+	- Select Data
+		bookWithCategory = FOREACH bookWithCategory GENERATE book::bookName AS bookName, book::bookPrice AS bookPrice, bookCategory::bookCategoryName AS bookCategoryName;
+	- Grouping
+		bookGroup = GROUP bookWithCategory by bookCategoryName;
+	- Aggregate Function
+		totalPriceByGroup = FOREACH bookGroup GENERATE group, SUM(bookWithCategory.bookPrice) AS totalPrice;
+	- Sorting
+		sortedTotalPrice = ORDER totalPriceByGroup BY totalPrice DESC;
+	- Limit
+		mostExpensiveBook = LIMIT sortedTotalPrice 1;
+
+
+
+Session 3 - SQL Query with Hive / Impala 
+========================================
+-> Hive dan Impala adalah Query Engine untuk melakukan perintah-perintah di database menggunakan SQL
+
+-> Create Table Dengan Data Dari CSV
+CREATE EXTERNAL TABLE MsCustomer(
+    CustomerId INT,
+    CustomerName VARCHAR(100),
+    CustomerPhone VARCHAR(50),
+    CustomerEmail VARCHAR(100)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE
+TBLPROPERTIES("skip.header.line.count" = "1")
+
+CREATE EXTERNAL TABLE MsRamen(
+    RamenId INT,
+    BrandId INT,
+    RamenName VARCHAR(100),
+    RamenStyleId INT,
+    CountryId INT,
+    RamenPrice INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE
+TBLPROPERTIES("skip.header.line.count" = "1")
+
+-> Insert Data to Table from CSV
+LOAD DATA INPATH '/user/cloudera/MsCustomer.csv'
+INTO TABLE MsCustomer
+
+LOAD DATA INPATH '/user/cloudera/MsRamen.csv'
+INTO TABLE MsRamen
+
+mysql -u root -p
+
+Sqoop (SQL to Hadoop)
+---------------------
+
+-> Aplikasi CLI Data Exchange untuk transfer data antara RDBMS ke HDFS buat dibaca di hive
+
+sudo sqoop import-all-tables --connect jdbc:mysql://quickstart/ramenshop --username=root --P --hive-import --hive-database=ramenshop
+
+Session 4 - MongoDB
+===================
+-> Database NoSQL -> Menyimpan unstructured data (gak butuh schema di RDBMS)
+-> Format datanya 
+
+Session 6 - Spark
+=================
+
+Spark
+-----
+Sebuah framework atau tool untuk memproses data dengan skala yang besar dengan tujuan untuk data analytics / model machine learning.
+
+Spark mengadopsi model map reduce hadoop sehingga prosesnya lebih efisien dan cepat
+
+Spark Context
+-------------
+-> Spark Context adalah entry point dari aplikasi spark
+-> Setelah versi spark 2.0, kita gak pake lagi spark context, tapi pakenya spark session
+
+Spark Session
+-------------
+-> Sudah menginclude Spark Context, danan berbagai API - API lain
+-> Di dalamnya sudah terdapat fitur pendukung (SQLContext, StreamingContext)
+-> Spark memiliki data structure yang bernama RDD (Resilient Distributed Dataset)
+
+Resilient Distributed Dataset (RDD)
+-----------------------------------
+- Struktur data dimana datanya diproses di beberapa worker / node.
+- Tujuannya sama seperti map reduce biar bisa diproses secara parallel
+- Paradigmnya functional programming
+
+
+
+Session 7 - Spark SQL
+=====================
+-> Dengan Spark SQL, kita bisa proses data secara struktural dan bisa melakukan query pada data
+
+
+
+Session 8 - Spark Streaming
+===========================
+-> Spark Streaming adalah modul untuk proses data secara real time
+
+
+
+Session 9 - Classification
+==========================
+-> Machine Learning adalah ilmu dimana si mesin bisa belajar / training. Dilatih dengan data set yang ada. 
+-> Supervised Learning
+-> Unsipervised Learning
+-> Classification termasuk ke dalam supervised learning
